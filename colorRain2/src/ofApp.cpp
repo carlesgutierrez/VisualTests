@@ -36,7 +36,7 @@ void ofApp::setup(){
   //ofNoStroke();
   ofEnableSmoothing();       //smooth();
   ofSetBackgroundAuto(false);
-  ofEnableAlphaBlending();
+  //ofEnableAlphaBlending();
   int i = 0;
   while (i<howMany) {
     x[i] = ofRandom(0, ofGetWidth());
@@ -50,6 +50,23 @@ void ofApp::setup(){
     gui.setup();
     gui.add(slider.setup("slider", 30, 0, 255));
 
+  //---------fbo
+
+  fbo.allocate(ofGetWidth(), ofGetHeight(), GL_RGB32F_ARB);
+
+  //ofFbo::Settings settings;
+  //settings.useStencil = true;
+  //settings.height = ofGetHeight();
+  //settings.width = ofGetWidth();
+  //settings.internalformat = GL_RGB32F_ARB;
+  //settings.numSamples = 2;
+  //fbo.allocate(settings);
+
+
+  fbo.begin();
+    ofBackground( 255, 255, 255 );
+  fbo.end();
+
 }
 
 
@@ -57,11 +74,7 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
 
-}
-
-//--------------------------------------------------------------
-void ofApp::draw(){
-
+  fbo.begin();
     if (bClearBk) {
       updateColors(slider);
       bClearBk = false;
@@ -87,6 +100,18 @@ void ofApp::draw(){
       }
       i +=1;
     }
+    fbo.end();
+
+
+
+
+}
+
+//--------------------------------------------------------------
+void ofApp::draw(){
+
+
+    fbo.draw(0,0);
 
     // ------------ GUI
     gui.draw();

@@ -46,15 +46,18 @@ void ofApp::setup(){
   posFloor.set(5, ofGetHeight()/8);
   dimFloor.set(ofGetWidth()*0.95, ofGetHeight()/8); // 10 H
 
+  //-----fbo
+  fbo.allocate(ofGetWidth(), ofGetHeight(), GL_RGB32F_ARB);
+  fbo.begin();
+  ofBackground( 255, 255, 255 );
+  fbo.end();
+
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
 
-}
-
-//--------------------------------------------------------------
-void ofApp::draw(){
+  fbo.begin();
 
   ofBackground(myBackGroundColor1);
 
@@ -73,6 +76,14 @@ void ofApp::draw(){
   //filter(BLUR, 0.5);
 
   drawFloors();
+  fbo.end();
+
+}
+
+//--------------------------------------------------------------
+void ofApp::draw(){
+
+  fbo.draw(0,0);
 
 
 }

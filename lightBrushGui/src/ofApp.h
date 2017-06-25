@@ -51,5 +51,6 @@ class ofApp : public ofBaseApp{
 		ofxFloatSlider sliderValue_Color;
 		ofxFloatSlider sliderValue_IncMov;
 
+		ofFbo fbo;
 
 };

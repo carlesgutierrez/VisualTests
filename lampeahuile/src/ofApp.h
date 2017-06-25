@@ -36,5 +36,7 @@ class ofApp : public ofBaseApp{
 		ofVec2f posFloor;
 		ofVec2f dimFloor;
 
+		ofFbo fbo;
+
 
 };

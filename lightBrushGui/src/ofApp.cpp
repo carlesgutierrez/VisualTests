@@ -69,34 +69,46 @@ void ofApp::setup(){
     gui.add(sliderValue_Color.setup("sliderValue_Color", 0.01, 0, 1));
     gui.add(sliderValue_IncMov.setup("sliderValue_IncMov", 0.001, 0, 0.1));
 
+    //---------fbo
+
+  fbo.allocate(ofGetWidth(), ofGetHeight(), GL_RGB32F_ARB);
+
+  fbo.begin();
+    ofBackground( 255, 255, 255 );
+  fbo.end();
+
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
+
+  fbo.begin();
+  if (bClearBk) {
+     bClearBk = false;
+     myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
+     ofBackground(myBackGroundColor1);
+   }
+
+   updateBrush();
+
+   // Base its hue by the rectangle movement
+   //float newColorValue = colorhue+weight+timerActive*0.5;
+   //println("Color Is "+str(newColorValue));
+   ofColor c = ofColor::fromHsb(colorhue, 255, 255, 3);
+   ofSetColor(c); // add 30 an alpha blended background
+   ofFill();
+   //stroke(colorhue, 100, 100, 30);
+
+   //line(mouseX, mouseY, pmouseX, pmouseY);
+   ofDrawRectangle(posBrush.x, posBrush.y, dimBrush.x, dimBrush.y);
+  fbo.end();
 
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
 
-  if (bClearBk) {
-   bClearBk = false;
-   myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
-   ofBackground(myBackGroundColor1);
- }
-
- updateBrush();
-
- // Base its hue by the rectangle movement
- //float newColorValue = colorhue+weight+timerActive*0.5;
- //println("Color Is "+str(newColorValue));
- ofColor c = ofColor::fromHsb(colorhue, 255, 255, 3);
- ofSetColor(c); // add 30 an alpha blended background
- ofFill();
- //stroke(colorhue, 100, 100, 30);
-
- //line(mouseX, mouseY, pmouseX, pmouseY);
- ofDrawRectangle(posBrush.x, posBrush.y, dimBrush.x, dimBrush.y);
+  fbo.draw(0,0);
 
   // ------------ GUI
   gui.draw();
