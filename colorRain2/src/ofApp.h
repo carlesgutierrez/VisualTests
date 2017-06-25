@@ -38,4 +38,8 @@ public:
 
     ofxPanel gui;
     ofxIntSlider slider;
+
+    ofFbo fbo;
+
+
 };
