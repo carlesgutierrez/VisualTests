@@ -9,7 +9,9 @@
 class ofApp : public ofBaseApp{
 
 public:
-    void setup();
+	void setupParticles();
+	void setAngle2Velocity(float angle);
+	void setup();
     void update();
     void draw();
 
@@ -26,7 +28,7 @@ public:
     void gotMessage(ofMessage msg);
 
     void updateColors(int tail);
-	void updateParticles();
+	void updateDrawParticles();
     void drawParticle(float _x, float _y, float _speed);
 
     float x[howMany];
@@ -34,8 +36,9 @@ public:
     float speed[howMany];
 	ofVec2f dir;
 	ofVec2f pos[howMany];
-	ofVec2f vel;
+	ofVec2f vel[howMany];
 	float angle;
+	int gap = 30;
 
     bool bClearBk = true;
     ofColor myColors[howManyColors];
@@ -43,13 +46,24 @@ public:
 
     ofxPanel gui;
 	ofxIntSlider drawMode;
+
+	ofxIntSlider angleSlider;
+	int last_angle;
     ofxIntSlider tail;
 	int last_tail;
 	ofxFloatSlider sizeProportion;
+	ofxFloatSlider interpolationVel;
 	ofxIntSlider defaultSize;
 	ofxToggle setSmoothing; //
+	ofxToggle bRandomX;
+	ofxFloatSlider deltaX;
+	ofxFloatSlider deltaY;
 
     ofFbo fbo;
+
+	//TODO1 un color de fondo y 2 colores de particulas
+	//TODO1 Colores en un Array, y al ser generada le asignas un color. 
+	//TODO2 trayectora con Angulo.
 
 
 };

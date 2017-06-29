@@ -1,6 +1,30 @@
 #include "ofApp.h"
 
+//------------------------------------------------------------
+void ofApp::setupParticles() {
 
+	//TODO define Direction and Velocity. Set radom pos too
+
+	for (int i = 0; i < howMany; i++) {
+		float x = ofRandom(10, ofGetWidth()-10);
+		float y = ofRandom(10, ofGetHeight()-10);
+		speed[i] = ofRandom(1, 5);
+
+		pos[i] = ofVec2f(x, y);
+		vel[i] = ofVec2f(1, 0);
+		//vel[i].rotate(radAngle, pos[i]);
+	}
+
+}
+
+//--------------------------------------------------
+void ofApp::setAngle2Velocity(float angle) {
+	float radAngle = ofDegToRad(angle);
+	for (int i = 0; i < howMany; i++) {
+		vel[i] = ofVec2f(1, 0);
+		vel[i].rotate(radAngle, pos[i]);
+	}
+}
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -10,15 +34,8 @@ void ofApp::setup(){
   updateColors(tail);//tail legnth param
   myBackGroundColor1 = myColors[ int( ofRandom(howManyColors))];
 
-  ofEnableAlphaBlending();
-
-  int i = 0;
-  while (i<howMany) {
-    x[i] = ofRandom(0, ofGetWidth());
-    y[i] = ofRandom(0, ofGetHeight());
-    speed[i] = ofRandom(1, 5);
-    i +=1;
-  }
+ 
+  setupParticles();
 
   //------------GUI
 
@@ -26,16 +43,21 @@ void ofApp::setup(){
 	gui.add(setSmoothing.setup(("SetSmoothing",true)));
     gui.add(tail.setup("tail", 30, 0, 100));
 	last_tail = tail;
+	gui.add(bRandomX.setup("bRandomX", true));
+	gui.add(angleSlider.setup("angleSlider", 0, 0, 360));
+	gui.add(deltaX.setup("deltaX", 0, -1, 1));
+	gui.add(deltaY.setup("deltaY", 1, -1, 1));
 	gui.add(drawMode.setup("drawMode", 0, 0, 2));
 	
 	gui.add(sizeProportion.setup("sizeProportion", 1, 0, 1));
 	gui.add(defaultSize.setup("defaultSize", 5, 0, 50));
 
+	gui.add(interpolationVel.setup("interpolationVel", 0.25, 0, 1));
+
   //---------fbo
 
   //fbo.allocate(ofGetWidth(), ofGetHeight(), GL_RGB32F_ARB); //GL_RGB32F_ARB
 
-	
   ofFbo::Settings settings;
   settings.height = ofGetHeight();
   settings.width = ofGetWidth();
@@ -69,22 +91,46 @@ void ofApp::updateColors(int tail) {
 }
 
 //-------------------------------------------------------------
-void ofApp::updateParticles() {
+void ofApp::updateDrawParticles() {
 	int i = 0;
+	ofEnableAlphaBlending();
 
-	while (i < howMany) {
+	//while (i < howMany) {
+	for(int i = 0; i < howMany; i++){
 
 		ofSetColor(10, 182, 203, 80 * speed[i]);
 		ofFill();
-		drawParticle(x[i], y[i], speed[i]);
-		x[i] += speed[i] / 4;
+		drawParticle(pos[i].x, pos[i].y, speed[i]);
+		//x[i] += speed[i] / 4;
 
-
-		if (x[i] > fbo.getWidth()) {
-			x[i] = 0;
+		//new method to move that particles
+		ofVec2f NextPos;
+		//deltaX = deltaX + speed[i] / 4;
+		//deltaY += speed[i] / 4;
+		NextPos.x = pos[i].x + deltaX;//+ speed[i] / 4; //+ vel[i]
+		NextPos.y = pos[i].y + deltaY;//- 1;
+		pos[i].interpolate(NextPos, interpolationVel);
+		
+		//aply out of boundaries
+		if (pos[i].x > ofGetWidth()+gap) {
+			pos[i].x = -gap;
 		}
-		i += 1;
+		else if (pos[i].x < -gap) {
+			pos[i].x = ofGetWidth();
+		}
+		if (pos[i].y > ofGetHeight()+ gap) {
+			pos[i].y = -gap;
+			//TODO add random X?
+			if(bRandomX)pos[i].x = ofRandom(-gap, ofGetWidth() -gap);
+		}
+		else if (pos[i].y < -gap) {
+			pos[i].y = ofGetHeight()+ gap;
+			//TODO add random X?
+		}
+		//TODO Change this to udpate Position by applying VEL and DIR
 	}
+
+	ofDisableAlphaBlending();
 }
 
 //--------------------------------------------------------------
@@ -100,6 +146,11 @@ void ofApp::update(){
 	  myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
     }
 
+	if (last_angle != angleSlider) {
+		last_angle = angleSlider;
+		setAngle2Velocity(angleSlider);
+	}
+
 	if (bClearBk) {
 		myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
 		bClearBk = false;
@@ -110,7 +161,7 @@ void ofApp::update(){
     ofDrawRectangle(0, 0, fbo.getWidth(), fbo.getHeight());
 
   
-	updateParticles();
+	updateDrawParticles();
 
     fbo.end();
 
