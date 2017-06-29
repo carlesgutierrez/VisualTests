@@ -1,42 +1,17 @@
 #include "ofApp.h"
 
 
-//------------------------
-
-void ofApp::updateColors(int tail){
-
-  myColors[0] = ofColor(184,164,156,tail);//(18, 15, 72);  // Fiery rose
-  myColors[1] = ofColor(162,224,206,tail);//(162, 28, 88); // Pale Robin
-  myColors[2] = ofColor(245,214,152,tail);//(40, 38, 96);  // Tuscan//}
-
-}
-
-
-//------------------
-void ofApp::drawParticle(float _x, float _y, float _speed) {
-      //Draw Drop
-      ofDrawCircle(_x, _y, _speed, _speed);
-      //Draw Line
-      //float midPointX = _x;
-      //float midPointY = _y;
-      //line(midPointX, _y, sliderValue, sliderValue);
-}
-
 
 //--------------------------------------------------------------
 void ofApp::setup(){
 
+  ofSetFrameRate(50);
 
-
-  updateColors(slider);//tail legnth param
+  updateColors(tail);//tail legnth param
   myBackGroundColor1 = myColors[ int( ofRandom(howManyColors))];
 
-  ofBackground(myBackGroundColor1);
+  ofEnableAlphaBlending();
 
-  //ofNoStroke();
-  ofEnableSmoothing();       //smooth();
-  ofSetBackgroundAuto(false);
-  //ofEnableAlphaBlending();
   int i = 0;
   while (i<howMany) {
     x[i] = ofRandom(0, ofGetWidth());
@@ -48,58 +23,95 @@ void ofApp::setup(){
   //------------GUI
 
     gui.setup();
-    gui.add(slider.setup("slider", 30, 0, 255));
+	gui.add(setSmoothing.setup(("SetSmoothing",true)));
+    gui.add(tail.setup("tail", 30, 0, 100));
+	last_tail = tail;
+	gui.add(drawMode.setup("drawMode", 0, 0, 2));
+	
+	gui.add(sizeProportion.setup("sizeProportion", 1, 0, 1));
+	gui.add(defaultSize.setup("defaultSize", 5, 0, 50));
 
   //---------fbo
 
-  fbo.allocate(ofGetWidth(), ofGetHeight(), GL_RGB32F_ARB);
+  //fbo.allocate(ofGetWidth(), ofGetHeight(), GL_RGB32F_ARB); //GL_RGB32F_ARB
 
-  //ofFbo::Settings settings;
-  //settings.useStencil = true;
-  //settings.height = ofGetHeight();
-  //settings.width = ofGetWidth();
-  //settings.internalformat = GL_RGB32F_ARB;
-  //settings.numSamples = 2;
-  //fbo.allocate(settings);
-
+	
+  ofFbo::Settings settings;
+  settings.height = ofGetHeight();
+  settings.width = ofGetWidth();
+  settings.useStencil = true;
+  settings.internalformat = GL_RGB32F_ARB; 
+  cout << "The the maximum number of MSAA samples that your graphic card supports is " << endl;
+  int maxSamples = fbo.maxSamples();
+  cout << maxSamples << endl;
+  settings.numSamples = maxSamples;
+  fbo.allocate(settings);
+  
 
   fbo.begin();
-    ofBackground( 255, 255, 255 );
+	ofClear(255, 0);
   fbo.end();
+
+  myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
+  updateColors(tail);
 
 }
 
 
+//------------------------
+
+void ofApp::updateColors(int tail) {
+
+	myColors[0] = ofColor(184, 164, 156, tail);//(18, 15, 72);  // Fiery rose
+	myColors[1] = ofColor(162, 224, 206, tail);//(162, 28, 88); // Pale Robin
+	myColors[2] = ofColor(245, 214, 152, tail);//(40, 38, 96);  // Tuscan//}
+
+}
+
+//-------------------------------------------------------------
+void ofApp::updateParticles() {
+	int i = 0;
+
+	while (i < howMany) {
+
+		ofSetColor(10, 182, 203, 80 * speed[i]);
+		ofFill();
+		drawParticle(x[i], y[i], speed[i]);
+		x[i] += speed[i] / 4;
+
+
+		if (x[i] > fbo.getWidth()) {
+			x[i] = 0;
+		}
+		i += 1;
+	}
+}
 
 //--------------------------------------------------------------
 void ofApp::update(){
 
   fbo.begin();
-    if (bClearBk) {
-      updateColors(slider);
-      bClearBk = false;
-      myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
+
+	ofSetCircleResolution(100);
+
+    if (last_tail != tail) {
+	  last_tail = tail;
+	  updateColors(tail);
+	  myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
     }
+
+	if (bClearBk) {
+		myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
+		bClearBk = false;
+	}
 
     ofSetColor(myBackGroundColor1);
     ofFill(); // That was used to mix colors from background and drops
-    ofDrawRectangle(0, 0, ofGetWidth(), ofGetHeight());
+    ofDrawRectangle(0, 0, fbo.getWidth(), fbo.getHeight());
 
-    int i = 0;
+  
+	updateParticles();
 
-    while (i < howMany) {
-
-      ofSetColor(10, 182, 203, 80*speed[i]);
-      ofFill();
-      drawParticle(x[i], y[i], speed[i]);
-      y[i] += speed[i]/4;
-
-
-      if (y[i] > 1000) {
-        y[i] = 0;
-      }
-      i +=1;
-    }
     fbo.end();
 
 
@@ -107,11 +119,37 @@ void ofApp::update(){
 
 }
 
+
+
+
+//------------------
+void ofApp::drawParticle(float _x, float _y, float _speed) {
+
+	if (drawMode == 0) {
+		//Draw Drop by speed
+		ofDrawCircle(_x, _y, _speed*sizeProportion*defaultSize, _speed*sizeProportion*defaultSize);
+	}
+	else if (drawMode == 1) {
+		//Draw Drop
+		ofDrawCircle(_x, _y, defaultSize*sizeProportion, defaultSize*sizeProportion);
+	}
+	else {
+	}
+
+	//Draw Line
+	//float midPointX = _x;
+	//float midPointY = _y;
+	//line(midPointX, _y, sliderValue, sliderValue);
+}
+
+
 //--------------------------------------------------------------
 void ofApp::draw(){
 
+	float scaledFboW = fbo.getWidth();
+	float scaledFboH = fbo.getHeight();
 
-    fbo.draw(0,0);
+    fbo.draw(0,0, scaledFboW, scaledFboH);
 
     // ------------ GUI
     gui.draw();

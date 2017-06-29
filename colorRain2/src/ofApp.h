@@ -26,18 +26,28 @@ public:
     void gotMessage(ofMessage msg);
 
     void updateColors(int tail);
+	void updateParticles();
     void drawParticle(float _x, float _y, float _speed);
 
     float x[howMany];
     float y[howMany];
     float speed[howMany];
+	ofVec2f dir;
+	ofVec2f pos[howMany];
+	ofVec2f vel;
+	float angle;
 
-    Boolean bClearBk = true;
+    bool bClearBk = true;
     ofColor myColors[howManyColors];
     ofColor myBackGroundColor1;
 
     ofxPanel gui;
-    ofxIntSlider slider;
+	ofxIntSlider drawMode;
+    ofxIntSlider tail;
+	int last_tail;
+	ofxFloatSlider sizeProportion;
+	ofxIntSlider defaultSize;
+	ofxToggle setSmoothing; //
 
     ofFbo fbo;
 
