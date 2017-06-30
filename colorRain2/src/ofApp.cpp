@@ -6,8 +6,8 @@ void ofApp::setupParticles() {
 	//TODO define Direction and Velocity. Set radom pos too
 
 	for (int i = 0; i < howMany; i++) {
-		float x = ofRandom(10, ofGetWidth()-10);
-		float y = ofRandom(10, ofGetHeight()-10);
+		float x = ofRandom(0, ofGetWidth()-0);
+		float y = ofRandom(0, ofGetHeight()-0);
 		speed[i] = ofRandom(1, 5);
 
 		pos[i] = ofVec2f(x, y);
@@ -17,19 +17,39 @@ void ofApp::setupParticles() {
 
 }
 
-//--------------------------------------------------
-void ofApp::setAngle2Velocity(float angle) {
-	float radAngle = ofDegToRad(angle);
-	for (int i = 0; i < howMany; i++) {
-		vel[i] = ofVec2f(1, 0);
-		vel[i].rotate(radAngle, pos[i]);
+//--------------------------------------------------------------
+void ofApp::setupSignedNoiseDemo() {
+
+	for (int i = 0; i<howManyHistoryNoise; i++) {
+		signedNoiseData[i] = 0;
 	}
+
+	radialNoiseCursor = 0.0;
 }
+
+//--------------------------------------------------------------
+void ofApp::updateSignedNoiseDemo() {
+
+	// Shift all of the old data forward through the array
+	for (int i = (howManyHistoryNoise - 1); i>0; i--) {
+		signedNoiseData[i] = signedNoiseData[i - 1];
+	}
+
+	// Compute the latest data, and insert it at the head of the array.
+	// Here is where ofSignedNoise is requested.
+	signedNoiseData[0] = noiseAmount * ofSignedNoise(radialNoiseCursor);
+	radialNoiseCursor += noiseStep;
+}
+
+
+
 
 //--------------------------------------------------------------
 void ofApp::setup(){
 
   ofSetFrameRate(50);
+
+  setupSignedNoiseDemo();
 
   updateColors(tail);//tail legnth param
   myBackGroundColor1 = myColors[ int( ofRandom(howManyColors))];
@@ -40,19 +60,20 @@ void ofApp::setup(){
   //------------GUI
 
     gui.setup();
-	gui.add(setSmoothing.setup(("SetSmoothing",true)));
-    gui.add(tail.setup("tail", 30, 0, 100));
+    gui.add(tail.setup("Fbo Tail", 30, 0, 100));
 	last_tail = tail;
-	gui.add(bRandomX.setup("bRandomX", true));
-	gui.add(angleSlider.setup("angleSlider", 0, 0, 360));
-	gui.add(deltaX.setup("deltaX", 0, -1, 1));
+	
+	gui.add(applyNoise.setup("applyNoise", false));
+	gui.add(noiseStep.setup("noiseStep", 0.002, 0.005, 0.1));
+	gui.add(noiseAmount.setup("noiseAmount", 1, 0, 1));
+	gui.add(deltaX.setup("deltaX", +0.1, -1, 1));
 	gui.add(deltaY.setup("deltaY", 1, -1, 1));
 	gui.add(drawMode.setup("drawMode", 0, 0, 2));
-	
 	gui.add(sizeProportion.setup("sizeProportion", 1, 0, 1));
 	gui.add(defaultSize.setup("defaultSize", 5, 0, 50));
-
-	gui.add(interpolationVel.setup("interpolationVel", 0.25, 0, 1));
+	gui.add(speedProportion.setup("speedProportion", 1, 0, 2));
+	gui.add(interpolationVel.setup("interpolationVel", 0.5, 0, 1));
+	gui.add(bRandomX.setup("bRandomX", false));
 
   //---------fbo
 
@@ -101,14 +122,22 @@ void ofApp::updateDrawParticles() {
 		ofSetColor(10, 182, 203, 80 * speed[i]);
 		ofFill();
 		drawParticle(pos[i].x, pos[i].y, speed[i]);
-		//x[i] += speed[i] / 4;
 
 		//new method to move that particles
+		if (applyNoise) {
+			vel[i].x = deltaX*speed[i] * speedProportion;
+			vel[i].y = deltaY*speed[i] * speedProportion;
+			//ofVec2f perpendicularVel = vel[i].getPerpendicular();
+			//vel[i].y += noiseRangeDelta * signedNoiseData[0];
+			vel[i].rotate(signedNoiseData[0]*45);
+		}
+		else {
+			vel[i].x = deltaX*speed[i] * speedProportion;
+			vel[i].y = deltaY*speed[i] * speedProportion;
+		}
 		ofVec2f NextPos;
-		//deltaX = deltaX + speed[i] / 4;
-		//deltaY += speed[i] / 4;
-		NextPos.x = pos[i].x + deltaX;//+ speed[i] / 4; //+ vel[i]
-		NextPos.y = pos[i].y + deltaY;//- 1;
+		NextPos.x = pos[i].x + vel[i].x;
+		NextPos.y = pos[i].y + vel[i].y;
 		pos[i].interpolate(NextPos, interpolationVel);
 		
 		//aply out of boundaries
@@ -136,6 +165,8 @@ void ofApp::updateDrawParticles() {
 //--------------------------------------------------------------
 void ofApp::update(){
 
+	updateSignedNoiseDemo();
+
   fbo.begin();
 
 	ofSetCircleResolution(100);
@@ -146,10 +177,10 @@ void ofApp::update(){
 	  myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
     }
 
-	if (last_angle != angleSlider) {
+	/*if (last_angle != angleSlider) {
 		last_angle = angleSlider;
 		setAngle2Velocity(angleSlider);
-	}
+	}*/
 
 	if (bClearBk) {
 		myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
@@ -214,8 +245,17 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
+
+	static bool bSmooth = false;
+
   if (key == ' ') {
     bClearBk = true;
+  }
+  else if (key == 's') {
+	  bSmooth = !bSmooth;
+	  if (!bSmooth)ofEnableSmoothing;
+	  else ofDisableSmoothing();
+	  cout << "There is no difference Smooth or not smooth. now is :" << bSmooth << endl;
   }
 }
 

@@ -5,12 +5,14 @@
 
 #define howMany 300
 #define howManyColors 3
+#define howManyHistoryNoise 400
 
 class ofApp : public ofBaseApp{
 
 public:
 	void setupParticles();
-	void setAngle2Velocity(float angle);
+	void setupSignedNoiseDemo();
+	void updateSignedNoiseDemo();
 	void setup();
     void update();
     void draw();
@@ -37,7 +39,7 @@ public:
 	ofVec2f dir;
 	ofVec2f pos[howMany];
 	ofVec2f vel[howMany];
-	float angle;
+
 	int gap = 30;
 
     bool bClearBk = true;
@@ -47,14 +49,19 @@ public:
     ofxPanel gui;
 	ofxIntSlider drawMode;
 
-	ofxIntSlider angleSlider;
-	int last_angle;
+	ofxToggle applyNoise;
+	ofxFloatSlider noiseStep;
+	ofxFloatSlider noiseAmount;
+	float signedNoiseData[howManyHistoryNoise];
+	float radialNoiseCursor;
+	
+
     ofxIntSlider tail;
 	int last_tail;
 	ofxFloatSlider sizeProportion;
 	ofxFloatSlider interpolationVel;
+	ofxFloatSlider speedProportion;
 	ofxIntSlider defaultSize;
-	ofxToggle setSmoothing; //
 	ofxToggle bRandomX;
 	ofxFloatSlider deltaX;
 	ofxFloatSlider deltaY;
