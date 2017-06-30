@@ -29,7 +29,8 @@ public:
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
 
-    void updateColors(int tail);
+	void setupSomeInitColors();
+	ofColor updateColorSyte(int id);
 	void updateDrawParticles();
     void drawParticle(float _x, float _y, float _speed);
 
@@ -42,12 +43,12 @@ public:
 
 	int gap = 30;
 
-    bool bClearBk = true;
-    ofColor myColors[howManyColors];
-    ofColor myBackGroundColor1;
+	ofxColorSlider colorBk;
+	ofxColorSlider colorParticle;
 
     ofxPanel gui;
-	ofxIntSlider drawMode;
+	ofxIntSlider drawModeSize;
+	ofxIntSlider drawModeColors;
 
 	ofxToggle applyNoise;
 	ofxFloatSlider noiseStep;
@@ -56,7 +57,7 @@ public:
 	float radialNoiseCursor;
 	
 
-    ofxIntSlider tail;
+    //ofxIntSlider tail;
 	int last_tail;
 	ofxFloatSlider sizeProportion;
 	ofxFloatSlider interpolationVel;

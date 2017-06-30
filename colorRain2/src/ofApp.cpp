@@ -51,30 +51,29 @@ void ofApp::setup(){
 
   setupSignedNoiseDemo();
 
-  updateColors(tail);//tail legnth param
-  myBackGroundColor1 = myColors[ int( ofRandom(howManyColors))];
-
- 
   setupParticles();
 
   //------------GUI
-
     gui.setup();
-    gui.add(tail.setup("Fbo Tail", 30, 0, 100));
-	last_tail = tail;
 	
 	gui.add(applyNoise.setup("applyNoise", false));
 	gui.add(noiseStep.setup("noiseStep", 0.002, 0.005, 0.1));
 	gui.add(noiseAmount.setup("noiseAmount", 1, 0, 1));
 	gui.add(deltaX.setup("deltaX", +0.1, -1, 1));
 	gui.add(deltaY.setup("deltaY", 1, -1, 1));
-	gui.add(drawMode.setup("drawMode", 0, 0, 2));
+	gui.add(drawModeSize.setup("drawModeSize", 0, 0, 1));
+	gui.add(drawModeColors.setup("drawModeColors", 0, 0, 1));
 	gui.add(sizeProportion.setup("sizeProportion", 1, 0, 1));
 	gui.add(defaultSize.setup("defaultSize", 5, 0, 50));
 	gui.add(speedProportion.setup("speedProportion", 1, 0, 2));
 	gui.add(interpolationVel.setup("interpolationVel", 0.5, 0, 1));
 	gui.add(bRandomX.setup("bRandomX", false));
 
+	//gui colors
+	setupSomeInitColors();
+	gui.add(colorParticle.setup("color Particle", colorParticle, ofColor(0, 0), ofColor(255, 255)));
+	gui.add(colorBk.setup("color Background", colorBk, ofColor(0, 0), ofColor(255, 100)));
+	//updateColorsBk(tail);//set some transparency
   //---------fbo
 
   //fbo.allocate(ofGetWidth(), ofGetHeight(), GL_RGB32F_ARB); //GL_RGB32F_ARB
@@ -95,20 +94,44 @@ void ofApp::setup(){
 	ofClear(255, 0);
   fbo.end();
 
-  myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
-  updateColors(tail);
+
 
 }
 
-
 //------------------------
 
-void ofApp::updateColors(int tail) {
+void ofApp::setupSomeInitColors() {
 
-	myColors[0] = ofColor(184, 164, 156, tail);//(18, 15, 72);  // Fiery rose
-	myColors[1] = ofColor(162, 224, 206, tail);//(162, 28, 88); // Pale Robin
-	myColors[2] = ofColor(245, 214, 152, tail);//(40, 38, 96);  // Tuscan//}
+	ofColor myColorsParticles[howManyColors];
+	myColorsParticles[0] = ofColor(184, 164, 156, 255);//(18, 15, 72);  // Fiery rose
+	myColorsParticles[1] = ofColor(162, 224, 206, 255);//(162, 28, 88); // Pale Robin
+	myColorsParticles[2] = ofColor(245, 214, 152, 255);//(40, 38, 96);  // Tuscan//}
 
+	colorParticle = myColorsParticles[(int)ofRandom(howManyColors)];
+
+	colorBk = ofColor(100, 100, 100, 30);//dafault bk color with 30 transparency : This will create the particle tail
+}
+
+//-----------------------------------------------------------
+ofColor ofApp::updateColorSyte(int i) {
+
+	ofColor auxColor;
+
+	if (drawModeColors == 0) {
+		//Use size for Alpha
+		float transparencySpeed = 80 * speed[i];
+		auxColor = ofColor(colorParticle, transparencySpeed);
+	}
+	else if (drawModeColors == 1) {
+		//Use direct color alpha from Gui
+		auxColor = colorParticle;
+	}
+	else if (drawModeColors == 2) {
+		//TODO work in diferent Colors pallete
+		//myFinalColor.setHsb()
+	}
+
+	return auxColor;
 }
 
 //-------------------------------------------------------------
@@ -119,7 +142,9 @@ void ofApp::updateDrawParticles() {
 	//while (i < howMany) {
 	for(int i = 0; i < howMany; i++){
 
-		ofSetColor(10, 182, 203, 80 * speed[i]);
+		ofColor myFinalParticleColor = updateColorSyte(i);
+		
+		ofSetColor(myFinalParticleColor);
 		ofFill();
 		drawParticle(pos[i].x, pos[i].y, speed[i]);
 
@@ -171,32 +196,14 @@ void ofApp::update(){
 
 	ofSetCircleResolution(100);
 
-    if (last_tail != tail) {
-	  last_tail = tail;
-	  updateColors(tail);
-	  myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
-    }
-
-	/*if (last_angle != angleSlider) {
-		last_angle = angleSlider;
-		setAngle2Velocity(angleSlider);
-	}*/
-
-	if (bClearBk) {
-		myBackGroundColor1 = myColors[int(ofRandom(howManyColors))];
-		bClearBk = false;
-	}
-
-    ofSetColor(myBackGroundColor1);
+    ofSetColor(colorBk);
     ofFill(); // That was used to mix colors from background and drops
     ofDrawRectangle(0, 0, fbo.getWidth(), fbo.getHeight());
 
   
 	updateDrawParticles();
 
-    fbo.end();
-
-
+ fbo.end();
 
 
 }
@@ -207,12 +214,12 @@ void ofApp::update(){
 //------------------
 void ofApp::drawParticle(float _x, float _y, float _speed) {
 
-	if (drawMode == 0) {
+	if (drawModeSize == 0) {
 		//Draw Drop by speed
 		ofDrawCircle(_x, _y, _speed*sizeProportion*defaultSize, _speed*sizeProportion*defaultSize);
 	}
-	else if (drawMode == 1) {
-		//Draw Drop
+	else if (drawModeSize == 1) {
+		//Draw All Drop same Sizes
 		ofDrawCircle(_x, _y, defaultSize*sizeProportion, defaultSize*sizeProportion);
 	}
 	else {
@@ -249,7 +256,7 @@ void ofApp::keyReleased(int key){
 	static bool bSmooth = false;
 
   if (key == ' ') {
-    bClearBk = true;
+	 setupSomeInitColors();
   }
   else if (key == 's') {
 	  bSmooth = !bSmooth;
