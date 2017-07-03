@@ -14,7 +14,7 @@ class blob {
 
   public:
 
-    void dessine();
+    void dessine(bool bRot);
 
     blob();
     void init(float ix, float ig);

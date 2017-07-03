@@ -30,6 +30,8 @@ class ofApp : public ofBaseApp{
 		blob blobs[nBlob];
 		poussiere poussieres[nPussiere];
 
+		//float transparency;
+
 		ofColor myBackGroundColor1, myBackGroundColor2;
 		ofColor myBlobsColor1, myBlobsColor2;
 

@@ -3,12 +3,20 @@
 //--------------------------
 void ofApp::drawFloors() {
 
-  ofSetColor(100,200);   //stroke(255, 100);
-  ofNoFill();
+	//fs
+	posFloor.set(5, ofGetWidth() / 8);
+	dimFloor.set(ofGetHeight()*0.95, ofGetWidth() / 8); // 10 H
 
-  for (int i=0; i<8; i++) {
-    ofDrawRectangle(posFloor.x, posFloor.y * i, dimFloor.x, dimFloor.y);
-  }
+	ofSetColor(100,200);   //stroke(255, 100);
+	ofNoFill();
+
+	ofPushMatrix();
+	ofTranslate(0, ofGetHeight());
+	ofRotate(-90);
+	for (int i=0; i<8; i++) {
+		ofDrawRectangle(posFloor.x, posFloor.y * i, dimFloor.x, dimFloor.y);
+	}
+	ofPopMatrix();
 }
 
 //--------------------------------------------------------------
@@ -42,10 +50,6 @@ void ofApp::setup(){
   myBlobsColor1 = ofColor(252, 96, 112,0.8);//color(75, 47, 94, 200); // Fiery rose(18,15,72);
   myBlobsColor2 = ofColor(227, 64, 88,0.8);
 
-  //fs
-  posFloor.set(5, ofGetHeight()/8);
-  dimFloor.set(ofGetWidth()*0.95, ofGetHeight()/8); // 10 H
-
 }
 
 //--------------------------------------------------------------
@@ -56,18 +60,18 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 
-  ofBackground(myBackGroundColor1);
+  //ofBackground(myBackGroundColor1);
 
   for (int a=0; a<nPussiere; a++) {
     ofSetColor(0, 200);
     ofNoFill();
-    poussieres[a].dessine();
+    poussieres[a].dessine(); 
   }
 
   ofSetColor(255, 100);
   ofNoFill();
   for (int a=0; a<nBlob; a++) {
-    blobs[a].dessine();
+    blobs[a].dessine(true); ////true means 90º rotati
   }
 
   //filter(BLUR, 0.5);

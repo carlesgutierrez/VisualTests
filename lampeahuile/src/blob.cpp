@@ -28,7 +28,7 @@ blob::blob() {
 
   couleur =  ofColor(227, 64, 88);//color(354, 62, 99, 200);//color(351, 72, 89, 200) //TODO Check why not work assign a color already defined
 
-  n = floor(ofRandom(8, 20));
+  n = floor(ofRandom(8, 20)); //10 works too
   float depart=ofRandom(90);
   //angles=new float[n];
   //rayons=new variateur[n];
@@ -57,11 +57,18 @@ void blob::init(float ix, float ig){
 
 //--------------
 
-void blob::dessine() {
+void blob::dessine(bool bRotated) {
+
+	if (bRotated) {
+		ofPushMatrix();
+		ofTranslate(0, ofGetHeight());
+		ofRotate(-90);
+	}
+
   float fx=0, fy=0, fx2=0, fy2=0, fx3=0, fy3=0;
   y+=respiration.val*0.05;
   y+=vY;
-  Boolean rien=true;
+  bool rien=true;
   respiration.avance();
   x+=ofRandom(-0.4, 0.4)+vX;
 
@@ -99,8 +106,18 @@ void blob::dessine() {
   ofEndShape(true);
 
   if (rien==true) {
-    y=ofGetHeight()+200;
-    x=ofRandom(-20, ofGetWidth()+20);
+	  if (!bRotated) {
+		  y = ofGetHeight() + 200;
+		  x = ofRandom(-20, ofGetWidth() + 20);
+	  }
+	  else {
+		  y = ofGetWidth() + 200;
+		  x = ofRandom(-20, ofGetHeight() + 20);
+	  }
+  }
+
+  if (bRotated) {
+	  ofPopMatrix();
   }
 }
 
