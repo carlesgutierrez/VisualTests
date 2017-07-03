@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "blob.h"
+#include "ofxGui.h"
 
 #define nBlob 10
 #define nPussiere 20
@@ -27,11 +28,15 @@ class ofApp : public ofBaseApp{
 
 		void drawFloors();
 
+		void setupSomeInitColors();
+
 		blob blobs[nBlob];
 		poussiere poussieres[nPussiere];
 
-		ofColor myBackGroundColor1, myBackGroundColor2;
-		ofColor myBlobsColor1, myBlobsColor2;
+		//float transparency;
+		ofxPanel gui;
+		ofxColorSlider myBackGroundColor1;
+		ofxColorSlider myBlobsColor1, myBlobsColor2;
 
 		ofVec2f posFloor;
 		ofVec2f dimFloor;
