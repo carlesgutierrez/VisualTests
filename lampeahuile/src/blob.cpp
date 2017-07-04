@@ -26,16 +26,16 @@ void variateur::avance() {
 
 blob::blob() {
 
-  //couleur =  ofColor(227, 64, 88);//color(354, 62, 99, 200);//color(351, 72, 89, 200) //TODO Check why not work assign a color already defined
-
   n = floor(ofRandom(8, 20)); //10 works too
   float depart=ofRandom(90);
   //angles=new float[n];
   //rayons=new variateur[n];
   float dec = 360.0/n;
-  float raydebase = ofRandom(40, 70);//random(20,100);
-  vY=-ofRandom(100-raydebase)*0.01;
-  vX=ofRandom(-0.03, 0.03);
+  int minR = 40;
+  int maxR = 70;
+  float raydebase = ofRandom(minR, maxR);//random(20,100);
+  vY = -ofRandom(maxR -raydebase)*0.01;
+  //vX=ofRandom(-0.03, 0.03);
   respiration.init(ofRandom(-25, -15), 3, 300, ofRandom(100, 300));
   ////  minray=raydebase*0.1; maxray=minray+raydebase*0.1;
   for (int a=0; a<n; a++) {
@@ -57,7 +57,8 @@ void blob::init(float ix, float ig){
 
 //--------------
 
-void blob::dessine(bool bRotated, ofColor _couleur) {
+//float plus = ofRandom(-0.01, 0.01);
+void blob::dessine(bool bRotated, ofColor _couleur, float _valPropRespX, float _valPropRespY, float _valPlusAngles) {
 
 	if (bRotated) {
 		ofPushMatrix();
@@ -66,27 +67,38 @@ void blob::dessine(bool bRotated, ofColor _couleur) {
 	}
 
   float fx=0, fy=0, fx2=0, fy2=0, fx3=0, fy3=0;
-  y+=respiration.val*0.05;
+  y += respiration.val*_valPropRespY;// 0.05;
   y+=vY;
   bool rien=true;
   respiration.avance();
-  x+=ofRandom(-0.4, 0.4)+vX;
+
+  vX = _valPropRespX*0.1;
+  x += _valPropRespX;// ofRandom(-_valPropRespX, _valPropRespX) + vX; // 0.4
 
   ofBeginShape();
   ofSetColor(_couleur);
   ofFill();
-  //fill(_couleur);
-  float plus=ofRandom(-0.01, 0.01);
+
+  float rotationPlus = _valPlusAngles; // ofRandom(-_valPlusAngles, _valPlusAngles); //0.01
   for (int a=0; a<n; a++) {
-    angles[a]+=plus;
+    angles[a]+= rotationPlus;
     rayons[a].avance();
     float rad=angles[a] ;
     float ix=cos(rad)*(rayons[a].val+respiration.val);
     float ig=sin(rad)*(rayons[a].val-respiration.val);
     ofCurveVertex(x+ix, y+ig);
-    if ((y+ig)>0) {
-      rien=false;
-    }
+    
+	if (_valPropRespY < 0) {
+		if ((y - ig) < ofGetWidth()) {
+			rien = false;
+		}
+	}
+	else {
+		if ((y + ig)>0) {
+			rien = false;
+		}
+	}
+
     if (a==0) {
       fx = x+ix;
       fy = y+ig;
@@ -107,40 +119,31 @@ void blob::dessine(bool bRotated, ofColor _couleur) {
 
   if (rien==true) {
 	  if (!bRotated) {
-		  y = ofGetHeight() + 200;
-		  x = ofRandom(-20, ofGetWidth() + 20);
+		  if (_valPropRespY > 0) {
+			  y = ofGetHeight() + 200;
+			  x = ofRandom(-20, ofGetWidth() + 20);
+		  }
+		  else {
+			  y = 0 - 200;
+			  x = ofRandom(-20, ofGetWidth() + 20);
+		  }
 	  }
 	  else {
-		  y = ofGetWidth() + 200;
-		  x = ofRandom(-20, ofGetHeight() + 20);
+		 // y = ofGetWidth() + 200;
+		 // x = ofRandom(-20, ofGetHeight() + 20);
+
+		if (_valPropRespY > 0) {
+			y = ofGetWidth() + 200;
+			x = ofRandom(-20, ofGetHeight() + 20);
+		}
+		else {
+			y = 0 - 200;
+			x = ofRandom(-20, ofGetHeight() + 20);
+		}
 	  }
   }
 
   if (bRotated) {
 	  ofPopMatrix();
   }
-}
-
-//-----------
-
-poussiere::poussiere() {
-  y=ofRandom(ofGetHeight());
-  init();
-}
-
-//----------------
-void poussiere::init() {
-  x=ofRandom(ofGetHeight());
-}
-
-//-------
-void poussiere::dessine() {
-  y+=ofRandom(0.3, 2);
-  x+=ofRandom(-1, 1);
-  if (y>ofGetHeight()+10) {
-    y=-10;
-    init();
-  }
-  //ofPoint(x, y);
-  //ofDrawCircle(x,y,1);
 }

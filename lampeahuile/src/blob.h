@@ -14,7 +14,7 @@ class blob {
 
   public:
 
-    void dessine(bool bRot, ofColor _couleur);
+    void dessine(bool bRot, ofColor _couleur, float _valPropRespY, float _valPropRespX, float _valPlusAngles);
 
     blob();
     void init(float ix, float ig);
@@ -27,13 +27,4 @@ class blob {
     variateur respiration;
 
 
-};
-
-class poussiere {
-  public:
-    float x, y;
-
-    poussiere();
-    void init();
-    void dessine();
 };

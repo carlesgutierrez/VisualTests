@@ -26,18 +26,27 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 
-		void drawFloors();
+		void setScaledColor(ofColor baseColor, int idStep, int minSteps, int maxSteps, int mode, bool invertOrder); //TODO With Floats will add mode detail
+
+		void drawFloors(ofColor _mainColor, int _modedrawFloors, bool _invertOrder);
 
 		void setupSomeInitColors();
 
 		blob blobs[nBlob];
-		poussiere poussieres[nPussiere];
 
 		//float transparency;
 		ofxPanel gui;
-		ofxColorSlider myBackGroundColor1;
-		ofxColorSlider myBlobsColor1, myBlobsColor2;
+		ofxToggle bRotated = true;
+		ofxColorSlider myBackGroundColor;
+		ofxColorSlider myBlobsColor, myBlobsColor2;
 
+		//ofxFloatSlider fboTail;
+
+		ofxFloatSlider myBlobPropRespirationX;
+		ofxFloatSlider myBlobPropRespirationY;
+		ofxFloatSlider myBlobValPlusAngles;
+
+		ofxIntSlider modeDrawFloors = 0;
 		ofVec2f posFloor;
 		ofVec2f dimFloor;
 
