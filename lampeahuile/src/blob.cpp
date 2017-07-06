@@ -135,9 +135,7 @@ ofSetLineWidth(_lineWidth);
 	  //cur.addVertex(cur[0]);
 	  ofPolyline auxPol;
 	  if (_polyResampled > 1) {
-		  auxPol = cur;
-		  //auxPol = cur.getResampledByCount(_polyResampled).getSmoothed(_polySmooth);
-		  //auxPol = auxPol.getResampledBySpacing(_polyResampled);
+		  auxPol = cur.getResampledByCount(_polyResampled).getSmoothed(_polySmooth);
 	  }
 	  else auxPol = cur;
 	  
