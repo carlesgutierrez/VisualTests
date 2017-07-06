@@ -4,6 +4,7 @@
 #include "blob.h"
 #include "ofxGui.h"
 
+
 #define nBlob 10
 #define nPussiere 20
 
@@ -39,13 +40,18 @@ class ofApp : public ofBaseApp{
 		ofxToggle bRotated = true;
 		ofxColorSlider myBackGroundColor;
 		ofxColorSlider myBlobsColor, myBlobsColor2;
-
+		ofxToggle bInvertPaletteColors = false;
 		//ofxFloatSlider fboTail;
 
 		ofxFloatSlider myBlobPropRespirationX;
 		ofxFloatSlider myBlobPropRespirationY;
 		ofxFloatSlider myBlobValPlusAngles;
-
+		ofxFloatSlider myBlobLinewidth;
+		ofxToggle	usePolylineMethods;
+		ofxIntSlider myBlobSmooth;
+		ofxIntSlider myBlobResampled;
+		ofxToggle	myBlobBeFilled;
+		ofxToggle	myBlobBeTriangleMesh;
 		ofxIntSlider modeDrawFloors = 0;
 		ofVec2f posFloor;
 		ofVec2f dimFloor;

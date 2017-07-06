@@ -44,10 +44,18 @@ void ofApp::setup(){
   gui.add(myBackGroundColor.setup("color Background", myBackGroundColor, ofColor(0, 1), ofColor(255, 100)));
   //gui.add(fboTail.setup("fbo Tail", 10, 1, 30));
   gui.add(modeDrawFloors.setup("modeDrawFloors", 0, 0, 2));
+  gui.add(bInvertPaletteColors.setup("bInvertPaletteColors"));
   gui.add(myBlobsColor.setup("color Blob", myBlobsColor, ofColor(0, 0), ofColor(255, 255)));
   gui.add(myBlobPropRespirationX.setup("Blob Vel X", 0.04, -0.2, 0.2));
   gui.add(myBlobPropRespirationY.setup("Blob Vel Y", 0.05, -0.2, 0.2));
   gui.add(myBlobValPlusAngles.setup("Blob Rot", 0.0, -0.05, 0.05));
+  gui.add(myBlobBeFilled.setup("Blob Fill?"));
+  gui.add(usePolylineMethods.setup("Blob Polyline"));
+  gui.add(myBlobBeTriangleMesh.setup("Blob TriangleMesh"));
+
+  gui.add(myBlobSmooth.setup("myBlobSmooth", 8, 0, 20));
+  gui.add(myBlobResampled.setup("myBlobResampled", 100, 0, 200));
+  gui.add(myBlobLinewidth.setup("Blob Line Width", 1, 0, 100));
   gui.add(bRotated.setup("Gfx rotated"));
 
   //Blobs Setup
@@ -67,7 +75,7 @@ void ofApp::update(){
 
 	  if (modeDrawFloors > 0) {
 		  //filter(BLUR, 0.5);
-		  drawFloors(myBackGroundColor, modeDrawFloors, false);
+		  drawFloors(myBackGroundColor, modeDrawFloors, bInvertPaletteColors);
 	  }
 	  else {
 		  ofSetColor(myBackGroundColor);
@@ -78,7 +86,7 @@ void ofApp::update(){
 
 	  ofNoFill();
 	  for (int a=0; a<nBlob; a++) {
-		blobs[a].dessine(bRotated, myBlobsColor, myBlobPropRespirationX, myBlobPropRespirationY, myBlobValPlusAngles); ////true means 90º rotati
+		blobs[a].dessine(bRotated, myBlobsColor, myBlobPropRespirationX, myBlobPropRespirationY, myBlobValPlusAngles, myBlobBeFilled, myBlobLinewidth, usePolylineMethods, myBlobSmooth, myBlobResampled, myBlobBeTriangleMesh); ////true means 90º rotati
 	  }
 
 

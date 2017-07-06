@@ -55,10 +55,8 @@ void blob::init(float ix, float ig){
 }
 
 
-//--------------
-
-//float plus = ofRandom(-0.01, 0.01);
-void blob::dessine(bool bRotated, ofColor _couleur, float _valPropRespX, float _valPropRespY, float _valPlusAngles) {
+//----------------------------------------------------
+void blob::dessine(bool bRotated, ofColor _couleur, float _valPropRespX, float _valPropRespY, float _valPlusAngles, bool _bFilled, float _lineWidth, bool _usePolylineMethods, int _polySmooth, int _polyResampled, bool _beTriangleMesh) {
 
 	if (bRotated) {
 		ofPushMatrix();
@@ -77,16 +75,27 @@ void blob::dessine(bool bRotated, ofColor _couleur, float _valPropRespX, float _
 
   ofBeginShape();
   ofSetColor(_couleur);
-  ofFill();
+  if (_bFilled) ofFill();
+	else ofNoFill();
+	
+ofSetLineWidth(_lineWidth);
 
   float rotationPlus = _valPlusAngles; // ofRandom(-_valPlusAngles, _valPlusAngles); //0.01
+  
+  bool bPolyMode = _usePolylineMethods;
+  ofPolyline cur;
+  ofxTriangleMesh myTriangleMesh;
+
   for (int a=0; a<n; a++) {
     angles[a]+= rotationPlus;
     rayons[a].avance();
     float rad=angles[a] ;
     float ix=cos(rad)*(rayons[a].val+respiration.val);
     float ig=sin(rad)*(rayons[a].val-respiration.val);
-    ofCurveVertex(x+ix, y+ig);
+   
+	ofVec2f initPoint = ofVec2f(x + ix, y + ig);
+	if(!bPolyMode)ofCurveVertex(initPoint.x, initPoint.y);
+	else cur.addVertex(initPoint);
     
 	if (_valPropRespY < 0) {
 		if ((y - ig) < ofGetWidth()) {
@@ -112,10 +121,33 @@ void blob::dessine(bool bRotated, ofColor _couleur, float _valPropRespX, float _
       fy3 = y+ig;
     }
   }
-  ofCurveVertex(fx, fy);
-  ofCurveVertex(fx2, fy2);
-  ofCurveVertex(fx3, fy3);
-  ofEndShape(true);
+  if (!bPolyMode) {
+	  ofCurveVertex(fx, fy);
+	  ofCurveVertex(fx2, fy2);
+	  ofCurveVertex(fx3, fy3);
+	  ofEndShape(true);
+  }
+  else {
+	  cur.addVertex(fx, fy);
+	  //cur.addVertex(fx2, fy2);
+	  //cur.addVertex(fx3, fy3);
+	  //if (!_beTriangleMesh)cur.setClosed(true);
+	  //cur.addVertex(cur[0]);
+	  ofPolyline auxPol;
+	  if (_polyResampled > 1) {
+		  auxPol = cur;
+		  //auxPol = cur.getResampledByCount(_polyResampled).getSmoothed(_polySmooth);
+		  //auxPol = auxPol.getResampledBySpacing(_polyResampled);
+	  }
+	  else auxPol = cur;
+	  
+	  if (_beTriangleMesh) updateAndDrawTriangleMesh(auxPol, ofColor::orangeRed, ofColor::aquamarine);
+	  else drawWithNormals(auxPol); 
+  }
+
+
+
+
 
   if (rien==true) {
 	  if (!bRotated) {
@@ -146,4 +178,171 @@ void blob::dessine(bool bRotated, ofColor _couleur, float _valPropRespX, float _
   if (bRotated) {
 	  ofPopMatrix();
   }
+}
+
+//--------------------------------------------------------------
+void blob::updateAndDrawTriangleMesh(const ofPolyline& line, ofColor mainColor, ofColor highlightColor) {
+
+	ofxTriangleMesh mesh;
+	ofPolyline lineRespaced;
+
+	if (line.size() > 2) {
+		lineRespaced = line;
+
+		// add the last point (so when we resample, it's a closed polygon)
+		//lineRespaced.addVertex(lineRespaced[0]);
+		// resample
+		//lineRespaced = lineRespaced.getResampledBySpacing(20);
+		// I want to make sure the first point and the last point are not the same, since triangle is unhappy: 
+	//lineRespaced.getVertices().erase(lineRespaced.getVertices().begin());
+		// if we have a proper set of points, mesh them: 
+		if (lineRespaced.size() > 5) {
+
+			// angle constraint = 33
+			// size constraint = -1 (don't constraint triangles by size);
+
+			mesh.triangulate(lineRespaced, 33, -1);
+
+
+			// this is an alternative, constrain on size not angle: 
+			//mesh.triangulate(lineRespaced, -1, 10);  
+
+			// see ofxTriangleMesh.h for info. 
+
+		}
+	}
+
+
+	//////////////////////////////////////////////////////
+	//Update Distances
+	vector < float > distances;
+	vector < float > closestAngle;
+
+	vector < ofPoint > pts = mesh.outputPts;
+
+	distances.clear();
+	closestAngle.clear();
+
+	for (auto pt : pts) {
+
+		float minDist = 10000;
+		float minAngle = 0;
+		for (int i = 0; i < lineRespaced.getVertices().size(); i++) {
+
+			ofPoint a = lineRespaced[i];
+			ofPoint b = lineRespaced[(i + 1) % lineRespaced.size()];
+			float dist = minimum_distance(a, b, pt);
+			if (dist < minDist) {
+				minDist = dist;
+				minAngle = atan2((b - a).y, (b - a).x);
+			}
+		}
+		//        for (auto origPt : line.getVertices()){
+		//            float dist = (origPt - pt).length();
+		//            if (dist < minDist){
+		//                minDist = dist;
+		//            }
+		//
+		//
+		//        }
+		distances.push_back(minDist);
+		closestAngle.push_back(minAngle);
+	}
+
+	///////////////////////////////////////////////////////
+	//draw Mesh
+	//mesh.draw();
+
+	if (line.size() > 2) {
+		ofMesh temp;
+
+		temp.setMode(OF_PRIMITIVE_TRIANGLES);
+
+		temp.addVertices(mesh.outputPts);
+
+		float angToMatch = ofGetElapsedTimef();
+
+		for (int i = 0; i < distances.size(); i++) {
+
+
+			ofPoint up(cos(angToMatch), sin(angToMatch), 0);
+			float ang = closestAngle[i];
+			ofPoint dir(cos(ang), sin(ang), 0);
+
+			float mix = up.dot(dir);
+
+			if (mix < 0) mix = fabs(mix);
+			//cout << mix << endl;
+
+			//mix = ofMap(mix, -1,1, 0,1, true);
+
+			float scale = ofMap(distances[i], 0, ofGetMouseX(), 1, 0, true) * mix;
+
+			ofPoint a;
+			a.set(mainColor.r, mainColor.g, mainColor.b);
+
+			ofPoint b;
+			b.set(highlightColor.r, highlightColor.g, highlightColor.b);
+
+			ofPoint c = scale * b + (1 - scale) * a;
+
+			temp.addColor(ofColor(c.x, c.y, c.z)); // TRY TO ADD TRANSPARENCY
+
+		}
+
+		for (int i = 0; i < mesh.triangles.size(); i++) {
+			temp.addIndex(mesh.triangles[i].index[0]);
+			temp.addIndex(mesh.triangles[i].index[1]);
+			temp.addIndex(mesh.triangles[i].index[2]);
+		}
+
+		temp.draw();
+	}
+	
+}
+
+//--------------------------------------------------------------
+void blob::drawWithNormals(const ofPolyline& _polyline) {
+
+	ofPolyline polyline = _polyline;
+	//polyline.getArea();
+
+	// add the last point (so when we resample, it's a closed polygon)
+	//polyline.addVertex(polyline[0]);
+	//polyline.setClosed(true);
+
+	for (int i = 0; i< (int)polyline.size()-1; i++) { // set -1 to avoid last repeatNext, but issues when smoothing
+		bool repeatNext = i == (int)polyline.size() - 1;
+
+		const ofPoint& cur = polyline[i];
+		const ofPoint& next = repeatNext ? polyline[0] : polyline[i + 1];
+
+		float angle = atan2f(next.y - cur.y, next.x - cur.x) * RAD_TO_DEG;
+		float distance = cur.distance(next);
+
+		if (repeatNext) {
+			ofSetColor(255, 0, 255);
+		}
+		glPushMatrix();
+		glTranslatef(cur.x, cur.y, 0);
+		ofRotate(angle);
+		ofDrawLine(0, 0, 0, distance);
+		ofDrawLine(0, 0, distance, 0);
+		glPopMatrix();
+	}
+}
+
+//--------------------------------------------------------------
+float blob::minimum_distance(ofPoint v, ofPoint w, ofPoint p) {
+	// Return minimum distance between line segment vw and point p
+	const float l2 = (v - w).lengthSquared();  // i.e. |w-v|^2 -  avoid a sqrt
+	if (l2 == 0.0) return (p - v).length();   // v == w case
+											  // Consider the line extending the segment, parameterized as v + t (w - v).
+											  // We find projection of point p onto the line.
+											  // It falls where t = [(p-v) . (w-v)] / |w-v|^2
+	const float t = (p - v).dot(w - v) / l2;
+	if (t < 0.0) return (p - v).length();       // Beyond the 'v' end of the segment
+	else if (t > 1.0) return (p - w).length();  // Beyond the 'w' end of the segment
+	const ofPoint projection = v + t * (w - v);  // Projection falls on the segment
+	return (p - projection).length();
 }

@@ -28,8 +28,8 @@ class ofApp : public ofBaseApp{
 		void updateBrush();
 		///////
 		//ColorBrush
-		Boolean bTimerActive = false;
-		Boolean bClearBk = true;
+		bool bTimerActive = false;
+		bool bClearBk = true;
 		int timerActive = 0;
 		float colorhue = 100;
 		ofVec2f  posBrush;
