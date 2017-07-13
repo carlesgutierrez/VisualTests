@@ -1,42 +1,113 @@
 #include "ofApp.h"
 
 //--------------------------------------------
-void ofApp::updateTimer(float nextvalue) {
+float ofApp::updateTimer(float nextvalue) {
 
-  float distMovement = ofDist(0, posBrush.y, 0, nextvalue);
+  float timerActive = 0;
 
-  //println("distMovement = " + str(distMovement));
-  //ofDrawBitmapString("distMovement = " + ofToString(distMovement), 10,100);
+  distMovement = ofDist(0, posBrush.y, 0, nextvalue);
 
   if (distMovement < 0) {
-	  cout << "can be neg" << endl;
+	  //cout << "can be neg" << endl;
   }
 
   if (distMovement > hightMoveDist) {
-    timerActive = 1;
+    timerActive = incMinValue;
   } else if (distMovement > midMoveDist) {
-    timerActive = 2;
+    timerActive = incMaxValue;
   } else {
-	//Set Slow Vel
+	//Set 0 changes
     timerActive = 0;
   }
+
+  return timerActive;
 }
 
+//-----------------------------------------------------
+ofColor ofApp::updateColorAction(int _modeColorAction, ofColor _colorAction, float _yNormPos1, float _yNormPos2) {
+	
+	float incrementedValue1;
+	float incrementedValue2;
+
+	//General modif checking posBrush.y
+	incrementedValue1 = _yNormPos1*ofGetHeight();
+	float counterIncrement = updateTimer(incrementedValue1);
+	
+	if (_modeColorAction == 1) {
+		ofColor auxColor = _colorAction;
+		float auxMapped = ofMap(_yNormPos1, 0, 1, 0, 1);
+		
+		incrementedValue1 = _yNormPos1 * 360;//Scaling to be able to treat it as integuer range at [0..360]
+		if (incrementedValue1 < 0) incrementedValue1 = 0;
+
+		//apply incrementedValue1
+		//to pick color gradient updatingTimer
+		float auxInc = singedInc*counterIncrement + colorhue;
+		if (auxInc > 350 || auxInc < 10) {
+			singedInc *= -1;
+		}
+		float newColorValue = fmod(auxInc, 360);
+		float normNewColorIndex = newColorValue /360;
+		colorhue = newColorValue;
+
+		auxColor = myGradientColor.getColorAtPercent(normNewColorIndex);
+
+		//Apply incrementValue2
+		//to BrigtnessValue
+		incrementedValue2 = _yNormPos2 * 255;
+		colorBrightNess = incrementedValue2;
+		auxColor.setBrightness(incrementedValue2);
+		if (auxColor.getSaturation() == 0) {
+			ofLogVerbose() << "GOT COLOR BLACK DAMMMM";
+		}
+
+
+		return auxColor;
+	}
+	else {
+		//Update Color Hue by Y Distance to next position
+
+		incrementedValue2 = _yNormPos2*255;
+		if (incrementedValue2 < 1) incrementedValue2 = 1;//brigtness can not be 0
+
+		//ColorHue set by incrementedValue1
+		float auxInc = singedInc*counterIncrement + colorhue;
+		if (auxInc > 280 || auxInc < 10)singedInc *= -1;
+		float newColorValue = fmod(auxInc, 360);
+		colorhue = newColorValue;
+
+		//BrigtnessValue
+		colorBrightNess = incrementedValue2;
+
+		//Update my color with the Interactive Values
+		ofColor auxColor = _colorAction;
+		auxColor.setHue(colorhue);
+		auxColor.setBrightness(incrementedValue2);
+		if (auxColor.getSaturation() == 0) {
+			ofLogVerbose() << "GOT COLOR BLACK DAMMMM";
+		}
+		return auxColor;
+	}
+
+
+}
 //-----------------
 void ofApp::updateBrush() {
   // Get a noise value based on xoff and scale it according to the window's width
-  float n = signedNoiseData[0] *float(ofGetHeight());
+	float valId1; //next pos
+	float valId2;
 
-  //Update Color Hue by Calc Distance to next noise value
-  updateTimer(n);
-
-  float auxInc = singedInc*timerActive + colorhue;
-  if (auxInc > 280 || auxInc < 10)singedInc *= -1;
-  float newColorValue = fmod(auxInc,360);
-  colorhue = newColorValue;
+	if (noiseInteractionMethod == LIGHTBRUSH_NOISEMODE_WALKERS) {
+		updateInteractiveData(myInteractiveDataClass.myInteractiveObjectsVector, valId1, valId2); //Updates n value
+	}
+	else {
+		valId1 =  signedNoiseData[0] * float(ofGetHeight()); //Rescale
+	}
+	
+  myActionColor = updateColorAction(modeColorAction, myActionColor, valId1, valId2);
 
   //Update Y pos
-  posBrush.y = n;
+  posBrush.y = valId1*ofGetHeight();
 }
 
 //--------------------------------------------------------------
@@ -49,45 +120,29 @@ void ofApp::setup(){
   ofSetBackgroundAuto(false);
   ofEnableAlphaBlending();
 
-  posBrush.set(5, ofGetWidth()*.5 );
-  dimBrush.set(ofGetWidth()*0.95, ofGetHeight()/8 );
+  posBrush.set(0, ofGetWidth()*.5 );
+  dimBrush.set(ofGetWidth(), ofGetHeight()/8 );
 
-  //for (int i=0; i<howManyColors; i++) {
-  //myColors[0] = ofColor(18, 15, 72);// Fiery rose
-  //myColors[1] = ofCcolor(162, 28, 88);// Pale Robin
-  //myColors[2] = ofCcolor(354, 62, 99, 200);// Fiery rose
-  //}
+  //Interaction Y class
+  myInteractiveDataClass.setup(2); //Set just one particle   //TODO 3? 0  Hue, 1 Sat , And 2 Value
 
   //Init Colors
   myBackGroundColor = ofColor(162, 28, 88, 0);// Pale Robin
   myActionColor = ofColor(354, 62, 99, 200);// Fiery rose
+  
+  //Set main colors to move inside
+  myGradientColor.reset();
+  myGradientColor.addColor(ofColor(myCompositionColor1));
+  myGradientColor.addColor(ofColor(myCompositionColor2));
+  myGradientColor.addColor(ofColor(myCompositionColor3));
+
+
 
   //------------GUI
+  myMainGui.setup();
 
-	gui.setup();
-	
-	float auxSizeBrush = ofGetHeight() / 8;
-	gui.add(sizeBrush.setup("Size Bursh", auxSizeBrush, 0, auxSizeBrush));
-	gui.add(alphaActionColor.setup("alphaActionColor", 10, 0, 255));
-	gui.add(alphaBkColor.setup("alphaBkColor", 1, 0, 100));
-	gui.add(ModeBlend.setup("ModeBlend", 1, 0, 5));
-	
-	gui.add(sliderValue_Color.setup("sliderValue_Color", 0.001, 0.0001, 0.1));
-	gui.add(sliderValue_IncMov.setup("sliderValue_IncMov", 0.001, 0.0001, 0.002));
-	gui.add(myBackGroundColor.setup("myBackGroundColor", myBackGroundColor, ofColor(0, 0), ofColor(255, 100)));
-	gui.add(myActionColor.setup("myActionColor", myActionColor, ofColor(0, 0), ofColor(255, 255)));
-	gui.add(modeDrawFloors.setup("modeDrawFloors", 1, 0, 2));
-
-	gui.add(noiseStep.setup("noiseStep", 0.002, 0.001, 0.02));
-	gui.add(noiseAmount.setup("noiseAmount", 1, 0, 1));
-	gui.add(hightMoveDist.setup("hightMoveDist", 5, 0, 10));
-	gui.add(midMoveDist.setup("midMoveDist", 2, 0, 10));
-	//ImGui::SliderFloat("noiseStep", &noiseStep, 0.005, 0.1);
-	//ImGui::SliderFloat("noiseAmount", &noiseAmount, 0, 1);
-
-    //---------fbo
-
-    ofFbo::Settings settings;
+  //---------fbo
+  ofFbo::Settings settings;
   settings.height = ofGetHeight();
   settings.width = ofGetWidth();
   settings.useStencil = true;
@@ -133,38 +188,63 @@ void ofApp::updateSignedNoiseDemo() {
 	radialNoiseCursor += noiseStep;
 }
 
+
+//-------------------------------------------------------------
+void ofApp::updateInteractiveData(vector<shared_ptr<LightBrushInteractionObject>> _myInteractiveObjects, float &valId0, float &valId1) {
+	
+	for (int i = 0; i < _myInteractiveObjects.size(); i++)
+	{
+		float thisRadius = 5;
+		ofVec2f mLoc = _myInteractiveObjects[i]->normPosFilter;
+
+		//TODO
+		//Do Something with this data
+		//update Next pos omnly with fisrt element
+		if (i == 0) {
+			valId0 = mLoc.y;
+		}
+		if (i == 1) {
+			valId1 = mLoc.y;
+		}
+
+	}
+
+}
+
 //--------------------------------------------------------------
 void ofApp::update(){
 
-  updateSignedNoiseDemo();
-
+ if (noiseInteractionMethod == LIGHTBRUSH_NOISEMODE_WALKERS) {
+	 //Interactive sensor
+	 myInteractiveDataClass.update();
+ }
+ else {
+	 //Signed Noise Method
+	 updateSignedNoiseDemo();
+ }
+  
+  
   fbo.begin();
 
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);//OF_BLENDMODE_ADD
-  if (modeDrawFloors > 0) {
-	  //filter(BLUR, 0.5);
-	  drawFloors(myBackGroundColor, modeDrawFloors, bInvertPaletteColors, false);
-  }
-  else {
-	  ofSetColor(myBackGroundColor, alphaBkColor);
-	  ofFill(); // That was used to mix colors from background and drops
-	  ofDrawRectangle(0, 0, ofGetWidth(), ofGetHeight());
-  }
+ 
+  //Draw just background Color i've you wish
+  ofSetColor(myBackGroundColor, alphaBkColor);
+  ofFill();
+  ofDrawRectangle(0, 0, ofGetWidth(), ofGetHeight());
 
   int auxBlendMode = ModeBlend;
   ofEnableBlendMode((ofBlendMode)auxBlendMode);//OF_BLENDMODE_ADD
 
+  //Update color and position brush
    updateBrush();
 
-   // Base its hue by the rectangle movement
-   //float newColorValue = colorhue+weight+timerActive*0.5;
-   //println("Color Is "+str(newColorValue));
-   ofColor c = ofColor::fromHsb(colorhue, 255, 255, alphaActionColor);
+   //Draw the Color LIght Rectanble Brush with some alpha for softer end.
+   //Draw final Color Rectangle
+   ofColor c = myActionColor;
+  
    ofSetColor(c); // add 30 an alpha blended background
    ofFill();
-   //stroke(colorhue, 100, 100, 30);
-
-   //line(mouseX, mouseY, pmouseX, pmouseY);
    ofDrawRectangle(posBrush.x, posBrush.y, dimBrush.x, sizeBrush);
   fbo.end();
 
@@ -172,91 +252,103 @@ void ofApp::update(){
 
 }
 
+//----------------------------------------------
+void ofApp::resetColorGradient() {
+	myGradientColor.reset();
+	myGradientColor.addColor(ofColor(myCompositionColor1));
+	myGradientColor.addColor(ofColor(myCompositionColor2));
+	myGradientColor.addColor(ofColor(myCompositionColor3));
+}
+
 //--------------------------------------------------------------
 void ofApp::draw(){
 
-  fbo.draw(0,0);
+	myGradientColor.drawDebug(0, 0, ofGetWidth(), ofGetHeight());
+
+	ofSetBackgroundColor(100);
+  fbo.draw(0, 0);
+
+
 
   // ------------ GUI
-  gui.draw();
-
   ofSetColor(255);
-  ofDrawBitmapString("Fps " + ofToString(ofGetFrameRate(), 1), 10, 10);
-  ofDrawBitmapString("newColorValue = " + ofToString(colorhue), 10, 30);
+  myMainGui.begin();
+
+  //Interaction Mode Gui Options
+  ImGui::PushItemWidth(70);
+  ImGui::SliderInt("noiseInteractionMethod", &currentInteractionMethod, 0, 1);
+  noiseInteractionMethod = (lightBrushNoiseMode)currentInteractionMethod;
+  if (noiseInteractionMethod == LIGHTBRUSH_NOISEMODE_WALKERS) {
+	  myInteractiveDataClass.drawGui();
+  }
+  else {
+	  ImGui::Text("Noise 1d Method");
+	  ImGui::SliderFloat("Step Noise", &noiseStep, 0.001, 0.02);
+
+	  ImGui::SliderFloat("Amount Noise", &noiseAmount, 0, 1);
+
+  }
+  ImGui::PopItemWidth();
+
+  ImGui::PushItemWidth(140);
+
+  //Color Gui Options
+  ImGui::Separator();
+  ImGui::ColorEdit3("myBackGroundColor", (float*)&myBackGroundColor);
+  ImGui::SliderInt("alphaBkColor", &alphaBkColor, 0, 4);
+  ImGui::ColorEdit3("myActionColor", (float*)&myActionColor);
+  ImGui::SliderInt("alphaActionColor", &alphaActionColor, 1, 255);
+  
+  ImGui::Separator();
+  if (ImGui::ColorEdit3("myCompositionColor1", (float*)&myCompositionColor1))resetColorGradient();
+  if(ImGui::ColorEdit3("myCompositionColor2", (float*)&myCompositionColor2))resetColorGradient();
+  if(ImGui::ColorEdit3("myCompositionColor3", (float*)&myCompositionColor3))resetColorGradient();
+  ImGui::PopItemWidth();
+
+  //Color Gui Options
+  ImGui::PushItemWidth(70);
+  ImGui::Text("Color Options");
+  ImGui::SliderInt("hightMoveDist", &hightMoveDist, 0, 10);
+  ImGui::SameLine();
+  ImGui::SliderInt("IncMinValue", &incMinValue, 1, 4);
+  ImGui::SliderFloat("CurrentDist=", &distMovement, 0, 10);
+  ImGui::SliderInt("midMoveDist", &midMoveDist, 0, 10);
+  ImGui::SameLine();
+  ImGui::SliderInt("IncMaxValue", &incMaxValue, 1, 4);
+      
+  ImGui::Text("Blending Options");
+  float auxSizeBrush = ofGetHeight() / 8;
+  ImGui::SliderInt("Size Brush", &sizeBrush, 1, auxSizeBrush);
+  ImGui::SliderInt("ModeBlend", &ModeBlend, 0, 2);
+
+
+  static bool bDrawDebug = false;
+  ImGui::Checkbox("Draw Debug Info", &bDrawDebug);
+
+  if (bDrawDebug) {
+	  //INTERACTIVE DATA GUI
+	  if (noiseInteractionMethod == LIGHTBRUSH_NOISEMODE_WALKERS) {
+		  //Interactive walkers
+		   myInteractiveDataClass.draw();
+
+	  }
+
+	  ofSetColor(255);
+	  ofDrawBitmapString("Fps " + ofToString(ofGetFrameRate(), 1), 10, 10);
+	  ofDrawBitmapString("newColorValue = " + ofToString(colorhue), 10, 30);
+	  ofDrawBitmapString("colorBrightNess = " + ofToString(colorBrightNess), 10, 50);
+	  
+  }
+
+  ImGui::PopItemWidth();
+
+
+  myMainGui.end();
 
 }
-
-//--------------------------
-void ofApp::drawFloors(ofColor _mainColor, int _modedrawFloors, bool _invertOrder, bool _bRotated) {
-
-	ofFill();
-
-	ofVec2f posFloor;
-	ofVec2f dimFloor;
-
-	ofPushMatrix();
-	if (_bRotated) {
-		posFloor.set(0, ofGetWidth() / 8);
-		dimFloor.set(ofGetHeight(), ofGetWidth() / 8); // 10 H
-		ofTranslate(0, ofGetHeight());
-		ofRotate(-90);
-	}
-	else {
-		posFloor.set(0, ofGetHeight() / 8);
-		dimFloor.set(ofGetWidth(), ofGetHeight() / 8); // 10 H
-	}
-
-	for (int i = 0; i<8; i++) {
-		setScaledColor(_mainColor, i, 0, 8, _modedrawFloors, _invertOrder); //ofColor baseColor, int idStep, int minSteps, int maxSteps, int mode, bool invertOrder) {
-
-		ofDrawRectangle(posFloor.x, posFloor.y * i, dimFloor.x, dimFloor.y);
-	}
-	ofPopMatrix();
-
-}
-
-//----------------------------------------
-void ofApp::setScaledColor(ofColor baseColor, int idStep, int minSteps, int maxSteps, int mode, bool invertOrder) {
-
-	float mapColorModif;
-	if (invertOrder) mapColorModif = ofMap(idStep, minSteps, maxSteps, 0, 1);
-	else mapColorModif = ofMap(idStep, minSteps, maxSteps, 1, 0);
-
-	ofColor auxNewColor = baseColor;
-	float h, s, v;
-	baseColor.getHsb(h, s, v);
-
-	if (mode == 1) { //Hue
-		auxNewColor.setHsb(h*mapColorModif, s, v, baseColor.a);
-	}
-	else if (mode == 2) {//Sat
-		auxNewColor.setHsb(h, s*mapColorModif, v, baseColor.a);
-	}
-	else if (mode == 3) {//Value
-		auxNewColor.setHsb(h, s, v*mapColorModif, baseColor.a);
-	}
-	else {
-		//Do not set Color
-		return;
-	}
-
-
-	ofSetColor(auxNewColor, auxNewColor.a);
-}
-
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-  if (key == 'c') {
-    bClearBk = true;
-  }
-  //else if (key == '+') {
-  //  colorhue = colorhue+3;
-  //  if (colorhue>360) colorhue = 0;
-  //} else if (key == '-') {
-  //  colorhue = colorhue-3;
-  //  if (colorhue<0) colorhue = 360;
-  //}
 
 }
 
@@ -277,10 +369,6 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-  //if (bTimerActive == false) {
-  //  bTimerActive = true;
-  //  timerActive = 0;
-  //}
 
 }
 

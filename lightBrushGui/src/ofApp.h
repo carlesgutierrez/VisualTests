@@ -1,21 +1,25 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxGui.h"
+#include "LigthBrushParticleManager.h"
+#include "ofxImGui.h"
+#include "ofxColorGradient.h"
 
 #define howManyColors 3
 #define howManyHistoryNoise 400
+
+enum lightBrushNoiseMode {
+	LIGHTBRUSH_NOISEMODE_1D = 0,
+	LIGHTBRUSH_NOISEMODE_WALKERS
+};
 
 class ofApp : public ofBaseApp{
 
 	public:
 		void setup();
 		void update();
+
 		void draw();
-
-		void drawFloors(ofColor _mainColor, int _modedrawFloors, bool _invertOrder, bool _bRotated);
-
-		void setScaledColor(ofColor baseColor, int idStep, int minSteps, int maxSteps, int mode, bool invertOrder);
 
 		void keyPressed(int key);
 		void keyReleased(int key);
@@ -30,51 +34,66 @@ class ofApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
 
 		//Local funcs
-		void updateTimer(float nextvalue);
+		void resetColorGradient();
+		float updateTimer(float nextvalue);
+		ofColor updateColorAction(int _modeColorAction, ofColor _colorAction, float _yNormPos1, float _yNormPos2);
 		void updateBrush();
 
 		void setupSignedNoiseDemo();
 		void updateSignedNoiseDemo();
 
+		void updateInteractiveData(vector<shared_ptr<LightBrushInteractionObject>> _myInteractiveObjects, float &Ypos, float & auxColorComponent);
+
 		///////
 		//ColorBrush
-		ofxIntSlider hightMoveDist;
-		ofxIntSlider midMoveDist;
-		ofxFloatSlider noiseStep;
-		ofxFloatSlider noiseAmount;
+		int modeColorAction = 1;
+		float distMovement = 0;
+		int hightMoveDist = 5;
+		int midMoveDist = 2;
+		float noiseStep= 0.002;
+		float noiseAmount = 1;
 		float signedNoiseData[howManyHistoryNoise];
 		float radialNoiseCursor;
 		bool bTimerActive = false;
 		bool bClearBk = true;
-		int timerActive = 0;
+		
+		ofxColorGradient<ofColor> myGradientColor;
 		float colorhue = 100;
+		float colorBrightNess = 255;
 		ofVec2f  posBrush;
 		ofVec2f  dimBrush;
 
 		///////
-		//Noise1d
-		float xoff = 0.0;
-		float xincrement = 0.001;
+		//Interaction Sensor
+		
+		lightBrushNoiseMode noiseInteractionMethod = LIGHTBRUSH_NOISEMODE_WALKERS;
+		int currentInteractionMethod = noiseInteractionMethod;
+		LigthBrushParticleManager myInteractiveDataClass;
 
 		//
-		ofxIntSlider sizeBrush;
+		int sizeBrush = ofGetHeight()/8;
+		int incMinValue = 1;
+		int incMaxValue = 2;
 		int singedInc = 1;
-		ofxIntSlider ModeBlend;
+		int ModeBlend = 1;
 		bool bInvertPaletteColors = false;
-		//int modeDrawFloors;
-		ofxIntSlider modeDrawFloors;
+
 		//ofColor myBackGroundColor;
-		ofxColorSlider myBackGroundColor;
 		//ofColor myActionColor;
-		ofxColorSlider myActionColor;
-		ofxIntSlider alphaActionColor;
-		ofxIntSlider alphaBkColor;
+		ImVec4 myBackGroundColor = ofColor(10, 10, 10, 255);
+		ImVec4 myActionColor = ofColor(255, 0, 255, 255);
+
+		ImVec4 myCompositionColor1 = ofColor::red;
+		ImVec4 myCompositionColor2 = ofColor::green;
+		ImVec4 myCompositionColor3 = ofColor::blue;
+
+		int alphaActionColor = 150;
+		int alphaBkColor = 3;
 
 		/////
 		//GUI
-		ofxPanel gui;
-		ofxFloatSlider sliderValue_Color;
-		ofxFloatSlider sliderValue_IncMov;
+		//ofxImGui gui;
+		ofxImGui::Gui myMainGui;
 		
 
 		ofFbo fbo;
