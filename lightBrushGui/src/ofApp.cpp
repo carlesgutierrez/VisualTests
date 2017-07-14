@@ -136,6 +136,15 @@ void ofApp::setup(){
   myGradientColor.addColor(ofColor(myCompositionColor2));
   myGradientColor.addColor(ofColor(myCompositionColor3));
 
+  //Easings for brightness
+  ofSetColor(bInvertEasing * 255);
+  for (size_t i = 0; i<easings.size(); i++) {
+	  plots[i].setMode(OF_PRIMITIVE_LINE_STRIP);
+	  for (int x = 0; x < ofGetWidth(); x++) {
+		  auto y = ofxeasing::map(x, 0.f, ofGetWidth(), 0.f, ofGetHeight(), easings[i]);
+		  plots[i].addVertex(ofVec3f(x, ofGetHeight() - y)); // invert y to account for OF y grows downwards
+	  }
+  }
 
 
   //------------GUI
@@ -152,15 +161,11 @@ void ofApp::setup(){
   cout << maxSamples << endl;
   settings.numSamples = maxSamples;
   fbo.allocate(settings);
-  fboBack.allocate(ofGetWidth(), ofGetHeight(), GL_RGB32F_ARB);
 
   fbo.begin();
   ofClear(255, 0);
   fbo.end();
 
-  fboBack.begin();
-  ofClear(255, 0);
-  fboBack.end();
 
 }
 
@@ -204,7 +209,13 @@ void ofApp::updateInteractiveData(vector<shared_ptr<LightBrushInteractionObject>
 			valId0 = mLoc.y;
 		}
 		if (i == 1) {
-			valId1 = mLoc.y;
+			//Aply some easing factors
+			if(bInvertEasing)mLoc.y = 1 - mLoc.y; //Lets invert that values to treat black at the end of easing
+			
+			float easingValApplied = ofxeasing::map(mLoc.y, 0.f, 1.f, 0.f, 1.f, easings[selectedEasingId]);
+
+			//Update var
+			valId1 = easingValApplied;
 		}
 
 	}
@@ -265,7 +276,7 @@ void ofApp::draw(){
 
 	myGradientColor.drawDebug(0, 0, ofGetWidth(), ofGetHeight());
 
-	ofSetBackgroundColor(100);
+	//ofSetBackgroundColor(100);
   fbo.draw(0, 0);
 
 
@@ -298,6 +309,21 @@ void ofApp::draw(){
   ImGui::SliderInt("alphaBkColor", &alphaBkColor, 0, 4);
   ImGui::ColorEdit3("myActionColor", (float*)&myActionColor);
   ImGui::SliderInt("alphaActionColor", &alphaActionColor, 1, 255);
+
+  if (ImGui::Checkbox("Invert Easing", &bInvertEasing)) {
+	  plots.clear();
+	  plots.resize(easings.size());
+	  ofSetColor(bInvertEasing*255);
+	  for (size_t i = 0; i<easings.size(); i++) {
+		  plots[i].setMode(OF_PRIMITIVE_LINE_STRIP);
+		  for (int x = 0; x < ofGetWidth(); x++) {
+			  auto y = ofxeasing::map(x, 0.f, ofGetWidth(), 0.f, ofGetHeight(), easings[i]);
+			  if(!bInvertEasing)plots[i].addVertex(ofVec3f(x, ofGetHeight() - y)); // invert y to account for OF y grows downwards
+			  else plots[i].addVertex(ofVec3f(x, y));
+		  }
+	  }
+  }
+  ComboCinder("Easing brightness", &selectedEasingId, easingNames, easingNames.size());
   
   ImGui::Separator();
   if (ImGui::ColorEdit3("myCompositionColor1", (float*)&myCompositionColor1))resetColorGradient();
@@ -333,6 +359,17 @@ void ofApp::draw(){
 
 	  }
 
+	  //Draw plots
+	  auto x = 0;
+	  auto y = 0;
+	  ofPushMatrix();
+	  ofSetColor(bInvertEasing * 255);
+	  ofTranslate(x, y);
+	  plots[selectedEasingId].draw();
+	  ofPopMatrix();
+	
+
+	  //Draw Control Colors Values
 	  ofSetColor(255);
 	  ofDrawBitmapString("Fps " + ofToString(ofGetFrameRate(), 1), 10, 10);
 	  ofDrawBitmapString("newColorValue = " + ofToString(colorhue), 10, 30);

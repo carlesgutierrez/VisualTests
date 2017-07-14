@@ -4,6 +4,8 @@
 #include "LigthBrushParticleManager.h"
 #include "ofxImGui.h"
 #include "ofxColorGradient.h"
+#include "ofxEasing.h"
+#include "imGuiUtils.h"
 
 #define howManyColors 3
 #define howManyHistoryNoise 400
@@ -54,8 +56,6 @@ class ofApp : public ofBaseApp{
 		float noiseAmount = 1;
 		float signedNoiseData[howManyHistoryNoise];
 		float radialNoiseCursor;
-		bool bTimerActive = false;
-		bool bClearBk = true;
 		
 		ofxColorGradient<ofColor> myGradientColor;
 		float colorhue = 100;
@@ -70,7 +70,6 @@ class ofApp : public ofBaseApp{
 		int currentInteractionMethod = noiseInteractionMethod;
 		LigthBrushParticleManager myInteractiveDataClass;
 
-		//
 		int sizeBrush = ofGetHeight()/8;
 		int incMinValue = 1;
 		int incMaxValue = 2;
@@ -78,8 +77,8 @@ class ofApp : public ofBaseApp{
 		int ModeBlend = 1;
 		bool bInvertPaletteColors = false;
 
-		//ofColor myBackGroundColor;
-		//ofColor myActionColor;
+		//////
+		//Colors Interaction
 		ImVec4 myBackGroundColor = ofColor(10, 10, 10, 255);
 		ImVec4 myActionColor = ofColor(255, 0, 255, 255);
 
@@ -91,12 +90,43 @@ class ofApp : public ofBaseApp{
 		int alphaBkColor = 3;
 
 		/////
+		//Easing Vars
+		int selectedEasingId = 0;
+		bool bInvertEasing = false;
+		std::vector<ofxeasing::function> easings{
+			ofxeasing::linear::easeOut,
+			ofxeasing::quad::easeOut,
+			ofxeasing::cubic::easeOut,
+			ofxeasing::quart::easeOut,
+			ofxeasing::quint::easeOut,
+			ofxeasing::circ::easeOut,
+			ofxeasing::sine::easeOut,
+			ofxeasing::exp::easeOut,
+			ofxeasing::elastic::easeOut,
+			ofxeasing::bounce::easeOut,
+			ofxeasing::back::easeOut,
+		};
+		std::vector<std::string> easingNames{
+			"linear",
+			"quad",
+			"cubic",
+			"quart",
+			"quint",
+			"circ",
+			"sine",
+			"exp",
+			"elastic",
+			"bounce",
+			"back",
+		};
+		std::vector<ofVboMesh> plots{ easings.size() };
+
+		/////
 		//GUI
 		//ofxImGui gui;
 		ofxImGui::Gui myMainGui;
 		
 
 		ofFbo fbo;
-		ofFbo fboBack;
 
 };

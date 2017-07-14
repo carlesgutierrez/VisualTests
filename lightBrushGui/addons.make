@@ -1,2 +1,3 @@
 ofxColorGradient
+ofxEasing
 ofxImGui
