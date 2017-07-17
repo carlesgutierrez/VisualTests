@@ -313,7 +313,7 @@ void ofApp::draw(){
   if (ImGui::Checkbox("Invert Easing", &bInvertEasing)) {
 	  plots.clear();
 	  plots.resize(easings.size());
-	  ofSetColor(bInvertEasing*255);
+	  //ofSetColor(bInvertEasing*255);
 	  for (size_t i = 0; i<easings.size(); i++) {
 		  plots[i].setMode(OF_PRIMITIVE_LINE_STRIP);
 		  for (int x = 0; x < ofGetWidth(); x++) {
